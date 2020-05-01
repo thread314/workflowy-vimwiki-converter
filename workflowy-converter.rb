@@ -3,10 +3,18 @@ require 'nokogiri'
 
 filenames = ["index"]
 masterlist = []
-puts "Enter the name of the file with the exported OPML from Workflowy?"
-filetoopen = gets.chomp 
-puts "Enter the destination folder"
-vimwikifolder = gets.chomp 
+filetoopen = ""
+
+until File.file?(filetoopen)
+  puts "Enter the name of the file with the exported OPML from Workflowy?"
+  filetoopen = gets.chomp 
+end
+
+vimwikifolder = ""
+until File.directory?(vimwikifolder)
+  puts "Enter the destination folder"
+  vimwikifolder = gets.chomp 
+end
 
 
 File.open(filetoopen, "r") do |f|
@@ -14,7 +22,6 @@ File.open(filetoopen, "r") do |f|
     formattedstring = Nokogiri::HTML(line)
     text = formattedstring.xpath('//outline/@text')
     cleantext = text.to_s.gsub(/[^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ]/,'')
-    puts cleantext
     cleantext = cleantext[0..22]
     if line.strip == "</outline>"
       filenames.pop
@@ -23,7 +30,6 @@ File.open(filetoopen, "r") do |f|
 	loop do
 		if masterlist.include?(cleantext)
 			cleantext = ">#{cleantext}"
-			puts "doubleup - #{cleantext}"
 		else
        			currentwiki = "#{vimwikifolder}#{filenames[-1]}.wiki"
 			File.write(currentwiki, "", mode: 'a')
@@ -35,11 +41,12 @@ File.open(filetoopen, "r") do |f|
 			break
 		end
 	end
-
        else
-       	  currentwiki = "#{vimwikifolder}#{filenames[-1]}.wiki"
+       	  currentwiki = "#{vimwikifolder}/#{filenames[-1]}.wiki"
           File.write(currentwiki, "#{text}\n", File.size(currentwiki) , mode: 'a')
        end
     end
   end
 end
+
+puts "All complete - the Workflowy data from \"#{filetoopen}\" has been converted to VimWiki format and saved in \"#{vimwikifolder}\"."
